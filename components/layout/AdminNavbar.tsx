@@ -8,14 +8,18 @@ import {
   LogOut,
   Menu,
   X,
-  Briefcase
+  Briefcase,
+  MessageSquare,
+  UserCog
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// Admin navigation links (no Dashboard link since logo takes you there)
+// Admin navigation links
 const adminLinks = [
   { href: '/admin/portfolio', label: 'Portfolio', icon: FolderOpen },
   { href: '/admin/services', label: 'Services', icon: Briefcase },
+  { href: '/admin/messages', label: 'Messages', icon: MessageSquare },
+  { href: '/admin/profile', label: 'Profile', icon: UserCog },
 ];
 
 export default function AdminNavbar() {
@@ -25,21 +29,16 @@ export default function AdminNavbar() {
   const router = useRouter();
 
   useEffect(() => {
-    // Get admin name from localStorage or fetch from API
+    // Get admin name from API (secure, no localStorage needed)
     const getUserInfo = async () => {
       try {
         const res = await fetch('/api/auth/verify');
         const data = await res.json();
         if (data.valid && data.user) {
           setAdminName(data.user.name || 'Admin');
-          localStorage.setItem('adminName', data.user.name || 'Admin');
-        } else {
-          const storedName = localStorage.getItem('adminName');
-          if (storedName) setAdminName(storedName);
         }
       } catch (error) {
-        const storedName = localStorage.getItem('adminName');
-        if (storedName) setAdminName(storedName);
+        console.error('Error fetching user info:', error);
       }
     };
     
@@ -49,10 +48,8 @@ export default function AdminNavbar() {
   const handleLogout = async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
-      localStorage.removeItem('adminToken');
-      localStorage.removeItem('adminUser');
-      localStorage.removeItem('adminName');
       router.push('/admin/login');
+      router.refresh();
     } catch (error) {
       console.error('Logout error:', error);
     }
