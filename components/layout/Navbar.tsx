@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Menu, X, Calendar } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Logo from '../shared/Logo';
@@ -15,18 +16,22 @@ const navLinks = [
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
+  
+  // Hide navbar on admin pages
+  if (pathname?.startsWith('/admin')) {
+    return null;
+  }
 
   return (
     <>
       <nav className="fixed top-0 w-full z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md shadow-md py-4">
         <div className="container-custom">
           <div className="flex items-center justify-between">
-            {/* Logo */}
             <Link href="/" className="z-10 transition-all duration-300 hover:scale-105">
               <Logo variant="dark" />
             </Link>
 
-            {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-8">
               {navLinks.map((link) => (
                 <Link
@@ -47,7 +52,6 @@ export default function Navbar() {
               </Link>
             </div>
 
-            {/* Mobile Menu Button */}
             <button
               className="md:hidden z-10 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -62,7 +66,6 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* Mobile Menu */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div
@@ -85,7 +88,7 @@ export default function Navbar() {
               ))}
               <Link
                 href="/book"
-                className="bg-gradient-to-r from-primary-blue to-primary-teal text-white px-6 py-3 rounded-full font-semibold text-center hover:shadow-lg transition-all"
+                className="bg-gradient-to-r from-primary-blue to-primary-teal text-white px-6 py-3 rounded-full font-semibold text-center"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Book Consultation
@@ -95,7 +98,6 @@ export default function Navbar() {
         )}
       </AnimatePresence>
       
-      {/* Spacer to prevent content from hiding under fixed navbar */}
       <div className="h-20"></div>
     </>
   );

@@ -14,6 +14,7 @@ export default function BookPage() {
     preferredDate: '',
     message: ''
   });
+  const [loading, setLoading] = useState(false);
 
   const services = [
     'Professional Website Design',
@@ -25,16 +26,37 @@ export default function BookPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // For now, just show success message
-    toast.success('Consultation request sent! We\'ll contact you within 24 hours.');
-    setFormData({
-      fullName: '',
-      email: '',
-      phone: '',
-      service: '',
-      preferredDate: '',
-      message: ''
-    });
+    setLoading(true);
+    
+    try {
+      const response = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        toast.success('Consultation request sent! We\'ll contact you within 24 hours.');
+        setFormData({
+          fullName: '',
+          email: '',
+          phone: '',
+          service: '',
+          preferredDate: '',
+          message: ''
+        });
+      } else {
+        toast.error(data.error || 'Something went wrong');
+      }
+    } catch (error) {
+      toast.error('Failed to send request. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -187,9 +209,10 @@ export default function BookPage() {
               {/* Submit Button */}
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-primary-blue to-primary-teal text-white py-3 rounded-lg font-semibold hover:shadow-lg transition-all hover:scale-[1.02]"
+                disabled={loading}
+                className="w-full bg-gradient-to-r from-primary-blue to-primary-teal text-white py-3 rounded-lg font-semibold hover:shadow-lg transition-all hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Request Consultation
+                {loading ? 'Sending...' : 'Request Consultation'}
               </button>
             </form>
           </motion.div>
