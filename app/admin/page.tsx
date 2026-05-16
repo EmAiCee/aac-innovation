@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Calendar, Clock, CheckCircle, Star, Filter, Search, Download, RefreshCw, X } from 'lucide-react';
+import { Calendar, Clock, CheckCircle, Star, Filter, Search, Download, RefreshCw, X, MessageSquare, Eye } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function AdminDashboard() {
@@ -11,6 +11,8 @@ export default function AdminDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
+  const [selectedMessage, setSelectedMessage] = useState<string | null>(null);
+  const [selectedBookingName, setSelectedBookingName] = useState('');
 
   const fetchBookings = useCallback(async () => {
     try {
@@ -28,23 +30,21 @@ export default function AdminDashboard() {
     }
   }, []);
 
-  // Apply filters and search
   const applyFilters = useCallback(() => {
     let filtered = [...bookings];
     
-    // Apply status filter
     if (statusFilter !== 'all') {
       filtered = filtered.filter(b => b.status === statusFilter);
     }
     
-    // Apply search
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(b => 
         b.fullName.toLowerCase().includes(term) ||
         b.email.toLowerCase().includes(term) ||
         b.phone.includes(term) ||
-        b.service.toLowerCase().includes(term)
+        b.service.toLowerCase().includes(term) ||
+        (b.message && b.message.toLowerCase().includes(term))
       );
     }
     
@@ -59,7 +59,6 @@ export default function AdminDashboard() {
     fetchBookings();
   }, [fetchBookings]);
 
-  // Refetch when page becomes visible
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
@@ -109,7 +108,6 @@ export default function AdminDashboard() {
     }
   };
 
-  // Export to CSV
   const exportToCSV = () => {
     const headers = ['Full Name', 'Email', 'Phone', 'Service', 'Preferred Date', 'Status', 'Message', 'Created At'];
     
@@ -138,6 +136,11 @@ export default function AdminDashboard() {
   const clearFilters = () => {
     setSearchTerm('');
     setStatusFilter('all');
+  };
+
+  const viewFullMessage = (message: string, name: string) => {
+    setSelectedMessage(message);
+    setSelectedBookingName(name);
   };
 
   const stats = {
@@ -248,14 +251,13 @@ export default function AdminDashboard() {
         {showFilters && (
           <div className="p-4 bg-gray-50">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Search */}
               <div>
                 <label className="block text-sm font-medium text-text-dark mb-2">Search</label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                   <input
                     type="text"
-                    placeholder="Search by name, email, phone, or service..."
+                    placeholder="Search by name, email, phone, service, or message..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-blue"
@@ -263,7 +265,6 @@ export default function AdminDashboard() {
                 </div>
               </div>
               
-              {/* Status Filter */}
               <div>
                 <label className="block text-sm font-medium text-text-dark mb-2">Status</label>
                 <select
@@ -335,6 +336,7 @@ export default function AdminDashboard() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-text-light uppercase tracking-wider">Contact</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-text-light uppercase tracking-wider">Service</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-text-light uppercase tracking-wider">Date</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-text-light uppercase tracking-wider">Message</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-text-light uppercase tracking-wider">Status</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-text-light uppercase tracking-wider">Actions</th>
                 </tr>
@@ -356,6 +358,25 @@ export default function AdminDashboard() {
                     <td className="px-6 py-4">
                       <div className="text-sm">{new Date(booking.preferredDate).toLocaleDateString()}</div>
                       <div className="text-xs text-text-light">{new Date(booking.createdAt).toLocaleDateString()}</div>
+                    </td>
+                    <td className="px-6 py-4">
+                      {booking.message ? (
+                        <div className="flex items-center gap-2">
+                          <MessageSquare size={14} className="text-primary-blue" />
+                          <span className="text-sm text-text-dark">
+                            {booking.message.length > 40 ? booking.message.substring(0, 40) + '...' : booking.message}
+                          </span>
+                          <button
+                            onClick={() => viewFullMessage(booking.message, booking.fullName)}
+                            className="text-primary-blue hover:text-primary-teal text-xs font-medium flex items-center gap-1"
+                          >
+                            <Eye size={12} />
+                            View Full
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-text-light italic text-sm">No message</span>
+                      )}
                     </td>
                     <td className="px-6 py-4">
                       <select
@@ -389,6 +410,41 @@ export default function AdminDashboard() {
           </div>
         )}
       </div>
+
+      {/* View Full Message Modal */}
+      {selectedMessage && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+              <div>
+                <h2 className="text-xl font-bold text-primary-navy">Full Message</h2>
+                <p className="text-text-light text-sm">From: {selectedBookingName}</p>
+              </div>
+              <button
+                onClick={() => setSelectedMessage(null)}
+                className="text-gray-400 hover:text-gray-600 transition"
+              >
+                <X size={24} />
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto max-h-[60vh]">
+              <div className="bg-gray-50 rounded-lg p-4">
+                <p className="text-text-dark whitespace-pre-wrap leading-relaxed">
+                  {selectedMessage}
+                </p>
+              </div>
+            </div>
+            <div className="p-6 border-t border-gray-100 flex justify-end">
+              <button
+                onClick={() => setSelectedMessage(null)}
+                className="px-4 py-2 bg-primary-blue text-white rounded-lg hover:bg-primary-blue/90 transition"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
