@@ -8,7 +8,7 @@ const PortfolioSchema = new mongoose.Schema({
   category: {
     type: String,
     required: [true, 'Category is required'],
-    enum: ['Web Design', 'Branding', 'Marketing', 'Consulting', 'Other'],
+    // Remove the enum restriction - allow any category name
   },
   description: {
     type: String,
