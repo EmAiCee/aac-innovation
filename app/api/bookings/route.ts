@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import Booking from '@/lib/models/Booking';
+import { sendAdminNotification, sendClientConfirmation } from '@/lib/email';
 
 export async function POST(request: NextRequest) {
   try {
@@ -8,6 +9,12 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     
     const booking = await Booking.create(body);
+    
+    // Send email notifications
+    await Promise.all([
+      sendAdminNotification(booking),
+      sendClientConfirmation(booking),
+    ]);
     
     return NextResponse.json(
       { success: true, data: booking, message: 'Booking created successfully' },

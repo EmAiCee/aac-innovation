@@ -9,16 +9,14 @@ import {
   Menu,
   X,
   Briefcase,
-  MessageSquare,
   UserCog
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// Admin navigation links
+// Admin navigation links (Messages removed)
 const adminLinks = [
   { href: '/admin/portfolio', label: 'Portfolio', icon: FolderOpen },
   { href: '/admin/services', label: 'Services', icon: Briefcase },
-  { href: '/admin/messages', label: 'Messages', icon: MessageSquare },
   { href: '/admin/profile', label: 'Profile', icon: UserCog },
 ];
 
@@ -29,7 +27,6 @@ export default function AdminNavbar() {
   const router = useRouter();
 
   useEffect(() => {
-    // Get admin name from API (secure, no localStorage needed)
     const getUserInfo = async () => {
       try {
         const res = await fetch('/api/auth/verify');
@@ -60,12 +57,10 @@ export default function AdminNavbar() {
       <nav className="fixed top-0 w-full z-50 bg-gradient-to-r from-primary-navy to-primary-blue shadow-lg">
         <div className="container-custom">
           <div className="flex items-center justify-between h-16">
-            {/* Logo - takes you back to dashboard */}
             <Link href="/admin" prefetch={false} className="text-white font-bold text-xl">
               AAC <span className="text-primary-teal">Admin</span>
             </Link>
 
-            {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-1">
               {adminLinks.map((link) => {
                 const isActive = pathname === link.href;
@@ -86,10 +81,8 @@ export default function AdminNavbar() {
                 );
               })}
               
-              {/* Divider */}
               <div className="h-8 w-px bg-white/20 mx-3"></div>
               
-              {/* Admin User Info & Logout */}
               <div className="flex items-center gap-3 ml-2">
                 <div className="text-right">
                   <p className="text-white text-sm font-semibold">{adminName}</p>
@@ -105,7 +98,6 @@ export default function AdminNavbar() {
               </div>
             </div>
 
-            {/* Mobile Menu Button */}
             <button
               className="md:hidden text-white p-2 rounded-lg hover:bg-white/10 transition-colors"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -116,7 +108,6 @@ export default function AdminNavbar() {
         </div>
       </nav>
 
-      {/* Mobile Menu */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div
