@@ -5,6 +5,14 @@ import Link from 'next/link';
 import { ArrowRight, Play, CheckCircle, Briefcase, Star, Users, Headphones } from 'lucide-react';
 
 export default function Hero() {
+  const handleExploreServices = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    const servicesSection = document.getElementById('services');
+    if (servicesSection) {
+      servicesSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden bg-gradient-to-br from-primary-navy via-primary-navy to-primary-blue">
       {/* Animated Background Elements */}
@@ -48,6 +56,7 @@ export default function Hero() {
               </Link>
               <Link
                 href="#services"
+                onClick={handleExploreServices}
                 className="border-2 border-white/30 text-white px-8 py-3.5 rounded-full font-semibold hover:bg-white/10 transition-all inline-flex items-center justify-center gap-2"
               >
                 <Play size={18} />

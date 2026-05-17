@@ -26,7 +26,7 @@ export default function ServicesSection() {
 
   if (loading) {
     return (
-      <section className="py-24 text-center">
+      <section id="services" className="py-24 text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-blue mx-auto"></div>
         <p className="mt-4 text-text-light">Loading services...</p>
       </section>
@@ -34,13 +34,16 @@ export default function ServicesSection() {
   }
 
   if (services.length === 0) {
-    return null;
+    return (
+      <section id="services" className="py-24 text-center">
+        <p className="text-text-light">No services available. Please add services in admin panel.</p>
+      </section>
+    );
   }
 
   return (
-    <section className="py-24 bg-gradient-to-b from-white to-gray-50">
+    <section id="services" className="py-24 bg-gradient-to-b from-white to-gray-50">
       <div className="container-custom">
-        {/* Header */}
         <div className="text-center mb-12">
           <span className="text-primary-blue font-semibold text-sm uppercase tracking-wider inline-flex items-center gap-2">
             <Sparkles size={16} />
@@ -54,13 +57,10 @@ export default function ServicesSection() {
           </p>
         </div>
         
-        {/* Services Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {services.map((service: any) => (
             <div key={service._id} className="group bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
-              {/* Top gradient bar */}
               <div className="h-1 bg-gradient-to-r from-primary-blue to-primary-teal"></div>
-              
               <div className="p-6">
                 <h3 className="text-xl font-bold text-primary-navy mb-3 group-hover:text-primary-blue transition-colors">
                   {service.title}
@@ -68,8 +68,6 @@ export default function ServicesSection() {
                 <p className="text-text-light mb-4 leading-relaxed">
                   {service.description}
                 </p>
-                
-                {/* Features with checkmarks */}
                 <div className="flex flex-wrap gap-2 mb-6">
                   {service.features?.map((feature: string, idx: number) => (
                     <span key={idx} className="text-xs bg-gray-100 text-text-dark px-3 py-1.5 rounded-full">
@@ -77,7 +75,6 @@ export default function ServicesSection() {
                     </span>
                   ))}
                 </div>
-                
                 <Link 
                   href="/book" 
                   className="inline-flex items-center gap-2 text-primary-blue font-semibold group-hover:gap-3 transition-all"
