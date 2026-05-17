@@ -1,27 +1,51 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Menu, X, Calendar } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Logo from '../shared/Logo';
 
 const navLinks = [
-  { href: '/', label: 'Home' },
-  { href: '/services', label: 'Services' },
-  { href: '/portfolio', label: 'Portfolio' },
-  { href: '/about', label: 'About' },
+  { href: '/', label: 'Home', isHash: false },
+  { href: '/#services', label: 'Services', isHash: true, hashId: 'services' },
+  { href: '/portfolio', label: 'Portfolio', isHash: false },
+  { href: '/about', label: 'About', isHash: false },
 ];
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
   
   // Hide navbar on admin pages
   if (pathname?.startsWith('/admin')) {
     return null;
   }
+
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>, link: typeof navLinks[0]) => {
+    if (link.isHash) {
+      e.preventDefault();
+      
+      if (pathname === '/') {
+        // Already on homepage, scroll to section
+        const element = document.getElementById(link.hashId!);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      } else {
+        // Navigate to homepage first, then scroll
+        router.push('/');
+        setTimeout(() => {
+          const element = document.getElementById(link.hashId!);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth' });
+          }
+        }, 100);
+      }
+    }
+  };
 
   return (
     <>
@@ -37,6 +61,7 @@ export default function Navbar() {
                 <Link
                   key={link.href}
                   href={link.href}
+                  onClick={(e) => handleClick(e, link)}
                   className="font-medium text-text-dark dark:text-gray-200 transition-all duration-300 hover:text-primary-blue relative group"
                 >
                   {link.label}
@@ -80,8 +105,11 @@ export default function Navbar() {
                 <Link
                   key={link.href}
                   href={link.href}
+                  onClick={(e) => {
+                    handleClick(e, link);
+                    setIsMobileMenuOpen(false);
+                  }}
                   className="text-text-dark dark:text-gray-200 text-xl font-semibold py-3 border-b border-gray-100 dark:border-gray-800 hover:text-primary-blue transition-colors"
-                  onClick={() => setIsMobileMenuOpen(false)}
                 >
                   {link.label}
                 </Link>
