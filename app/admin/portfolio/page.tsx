@@ -1,9 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Plus, Edit, Trash2, ImageIcon, Star, X, Upload, GripVertical } from 'lucide-react';
+import { Plus, Edit, Trash2, ImageIcon, Star, X, Upload, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import Image from 'next/image';
 
 interface PortfolioItem {
   _id: string;
@@ -18,14 +17,22 @@ interface PortfolioItem {
   order: number;
 }
 
+interface Service {
+  _id: string;
+  title: string;
+  isActive: boolean;
+}
+
 export default function AdminPortfolioPage() {
   const [items, setItems] = useState<PortfolioItem[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState<PortfolioItem | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
-    category: 'Web Design',
+    category: '',
     description: '',
     clientName: '',
     year: new Date().getFullYear().toString(),
@@ -36,6 +43,7 @@ export default function AdminPortfolioPage() {
 
   useEffect(() => {
     fetchItems();
+    fetchServices();
   }, []);
 
   const fetchItems = async () => {
@@ -47,14 +55,76 @@ export default function AdminPortfolioPage() {
       }
     } catch (error) {
       toast.error('Failed to load portfolio items');
+    }
+  };
+
+  const fetchServices = async () => {
+    try {
+      const res = await fetch('/api/services');
+      const data = await res.json();
+      if (data.success) {
+        // Get only active services for categories
+        const activeServices = data.data.filter((s: Service) => s.isActive === true);
+        setServices(activeServices);
+      }
+    } catch (error) {
+      console.error('Error fetching services:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image must be less than 5MB');
+      return;
+    }
+
+    setUploading(true);
+    const uploadFormData = new FormData();
+    uploadFormData.append('file', file);
+
+    try {
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: uploadFormData,
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setFormData({ ...formData, image: data.url });
+      } else {
+        toast.error(data.error || 'Upload failed');
+      }
+    } catch (error) {
+      toast.error('Failed to upload image');
+    } finally {
+      setUploading(false);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!formData.image) {
+      toast.error('Please upload an image');
+      return;
+    }
+
+    if (!formData.category) {
+      toast.error('Please select a category');
+      return;
+    }
+
     try {
       const url = editingItem ? `/api/portfolio/${editingItem._id}` : '/api/portfolio';
       const method = editingItem ? 'PUT' : 'POST';
@@ -68,7 +138,7 @@ export default function AdminPortfolioPage() {
       const data = await res.json();
       
       if (data.success) {
-        toast.success(editingItem ? 'Item updated successfully' : 'Item added successfully');
+        toast.success(editingItem ? 'Portfolio updated successfully' : 'Portfolio added successfully');
         setShowModal(false);
         setEditingItem(null);
         resetForm();
@@ -117,7 +187,7 @@ export default function AdminPortfolioPage() {
   const resetForm = () => {
     setFormData({
       title: '',
-      category: 'Web Design',
+      category: '',
       description: '',
       clientName: '',
       year: new Date().getFullYear().toString(),
@@ -143,8 +213,6 @@ export default function AdminPortfolioPage() {
       toast.error('Failed to update featured status');
     }
   };
-
-  const categories = ['Web Design', 'Branding', 'Marketing', 'Consulting', 'Other'];
 
   if (loading) {
     return (
@@ -188,7 +256,7 @@ export default function AdminPortfolioPage() {
             <div key={item._id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition group">
               {/* Image */}
               <div className="relative h-48 bg-gray-200">
-                {item.image && item.image !== '/placeholder.jpg' ? (
+                {item.image ? (
                   <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
                 ) : (
                   <div className="flex items-center justify-center h-full">
@@ -265,6 +333,7 @@ export default function AdminPortfolioPage() {
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-blue"
+                  placeholder="e.g., E-Commerce Platform"
                 />
               </div>
               
@@ -276,10 +345,16 @@ export default function AdminPortfolioPage() {
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-blue"
                 >
-                  {categories.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
+                  <option value="">Select a category</option>
+                  {services.map((service) => (
+                    <option key={service._id} value={service.title}>
+                      {service.title}
+                    </option>
                   ))}
                 </select>
+                <p className="text-xs text-text-light mt-1">
+                  Categories come from your active services
+                </p>
               </div>
               
               <div>
@@ -290,6 +365,7 @@ export default function AdminPortfolioPage() {
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-blue"
+                  placeholder="Describe the project..."
                 />
               </div>
               
@@ -301,6 +377,7 @@ export default function AdminPortfolioPage() {
                     value={formData.clientName}
                     onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-blue"
+                    placeholder="Client name"
                   />
                 </div>
                 <div>
@@ -310,6 +387,7 @@ export default function AdminPortfolioPage() {
                     value={formData.year}
                     onChange={(e) => setFormData({ ...formData, year: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-blue"
+                    placeholder="2024"
                   />
                 </div>
               </div>
@@ -325,16 +403,57 @@ export default function AdminPortfolioPage() {
                 />
               </div>
               
+              {/* Image Upload Section */}
               <div>
-                <label className="block text-sm font-medium text-text-dark mb-1">Image URL</label>
-                <input
-                  type="text"
-                  placeholder="https://images.unsplash.com/..."
-                  value={formData.image}
-                  onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-blue"
-                />
-                <p className="text-xs text-text-light mt-1">Enter an image URL (Unsplash, Cloudinary, etc.)</p>
+                <label className="block text-sm font-medium text-text-dark mb-1">Project Image *</label>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                  {formData.image ? (
+                    <div className="relative">
+                      <img 
+                        src={formData.image} 
+                        alt="Preview" 
+                        className="max-h-48 mx-auto rounded-lg object-contain"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, image: '' })}
+                        className="absolute top-2 right-2 bg-red-600 text-white p-1 rounded-full hover:bg-red-700 transition"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="py-8">
+                      <Upload className="mx-auto text-gray-400 mb-3" size={40} />
+                      <p className="text-text-light mb-2">Click to upload an image</p>
+                      <p className="text-xs text-text-light">PNG, JPG, GIF up to 5MB</p>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        disabled={uploading}
+                        className="hidden"
+                        id="image-upload"
+                      />
+                      <label
+                        htmlFor="image-upload"
+                        className="inline-flex items-center gap-2 mt-3 px-4 py-2 bg-primary-blue text-white rounded-lg cursor-pointer hover:bg-primary-blue/90 transition disabled:opacity-50"
+                      >
+                        {uploading ? (
+                          <>
+                            <Loader2 size={18} className="animate-spin" />
+                            Uploading...
+                          </>
+                        ) : (
+                          <>
+                            <Upload size={18} />
+                            Select Image
+                          </>
+                        )}
+                      </label>
+                    </div>
+                  )}
+                </div>
               </div>
               
               <div className="flex items-center gap-2">
@@ -360,7 +479,8 @@ export default function AdminPortfolioPage() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-gradient-to-r from-primary-blue to-primary-teal text-white rounded-lg hover:shadow-lg transition"
+                  disabled={!formData.image || !formData.category}
+                  className="flex-1 px-4 py-2 bg-gradient-to-r from-primary-blue to-primary-teal text-white rounded-lg hover:shadow-lg transition disabled:opacity-50"
                 >
                   {editingItem ? 'Update' : 'Create'} Project
                 </button>
