@@ -53,7 +53,7 @@ export default function Navbar() {
         <div className="container-custom">
           <div className="flex items-center justify-between">
             <Link href="/" className="z-10 transition-all duration-300 hover:scale-105">
-              <Logo variant="dark" />
+              <Logo />
             </Link>
 
             <div className="hidden md:flex items-center space-x-8">

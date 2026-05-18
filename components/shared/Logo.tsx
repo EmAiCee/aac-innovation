@@ -1,9 +1,12 @@
 'use client';
 
-export default function Logo() {
+interface LogoProps {
+  variant?: 'light' | 'dark';
+}
+
+export default function Logo({ variant = 'dark' }: LogoProps) {
   return (
     <div className="flex items-center gap-2">
-      {/* Custom SVG Logo */}
       <svg
         width="40"
         height="40"
@@ -37,8 +40,7 @@ export default function Logo() {
         </defs>
       </svg>
       
-      {/* Brand Name */}
-      <div className="font-bold text-xl text-primary-navy dark:text-white">
+      <div className={`font-bold text-xl ${variant === 'light' ? 'text-white' : 'text-primary-navy dark:text-white'}`}>
         AAC
         <span className="gradient-text"> Innovations</span>
       </div>
