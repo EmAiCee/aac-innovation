@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Calendar, Clock, CheckCircle, Star, Filter, Search, Download, RefreshCw, X, MessageSquare, Eye } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-// Define the Booking type
+// Define the Booking interface
 interface Booking {
   _id: string;
   fullName: string;
@@ -13,7 +13,7 @@ interface Booking {
   service: string;
   preferredDate: string;
   createdAt: string;
-  status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+  status: string;
   message?: string;
 }
 
@@ -47,12 +47,12 @@ export default function AdminDashboard() {
     let filtered = [...bookings];
     
     if (statusFilter !== 'all') {
-      filtered = filtered.filter(b => b.status === statusFilter);
+      filtered = filtered.filter((b: Booking) => b.status === statusFilter);
     }
     
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(b => 
+      filtered = filtered.filter((b: Booking) => 
         b.fullName.toLowerCase().includes(term) ||
         b.email.toLowerCase().includes(term) ||
         b.phone.includes(term) ||
@@ -72,19 +72,6 @@ export default function AdminDashboard() {
     fetchBookings();
   }, [fetchBookings]);
 
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        fetchBookings();
-      }
-    };
-    
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [fetchBookings]);
-
   const updateStatus = async (id: string, status: string) => {
     try {
       const res = await fetch(`/api/bookings/${id}`, {
@@ -95,7 +82,7 @@ export default function AdminDashboard() {
       
       if (res.ok) {
         setBookings(prev => prev.map((b: Booking) => 
-          b._id === id ? { ...b, status: status as Booking['status'] } : b
+          b._id === id ? { ...b, status } : b
         ));
         toast.success(`Booking marked as ${status}`);
       }
@@ -114,7 +101,6 @@ export default function AdminDashboard() {
         if (res.ok) {
           setBookings(prev => prev.filter((b: Booking) => b._id !== id));
           toast.success('Booking deleted successfully');
-          if (selectedMessage) setSelectedMessage(null);
         }
       } catch (error) {
         toast.error('Failed to delete booking');
@@ -178,7 +164,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="container-custom">
-      {/* Header */}
       <div className="flex justify-between items-center mb-8 flex-wrap gap-4">
         <div>
           <h1 className="text-3xl font-bold text-primary-navy">Dashboard Overview</h1>
@@ -194,7 +179,6 @@ export default function AdminDashboard() {
         </button>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition cursor-pointer" onClick={() => setStatusFilter('all')}>
           <div className="flex items-center justify-between">
@@ -247,7 +231,6 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Filters Bar */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
         <div className="p-4 border-b border-gray-100">
           <button
@@ -256,9 +239,6 @@ export default function AdminDashboard() {
           >
             <Filter size={18} />
             <span className="font-medium">Filters & Search</span>
-            <span className="text-xs text-text-light">
-              {statusFilter !== 'all' || searchTerm ? '(Active)' : ''}
-            </span>
           </button>
         </div>
         
@@ -310,7 +290,6 @@ export default function AdminDashboard() {
         )}
       </div>
 
-      {/* Results Count */}
       <div className="mb-4 flex justify-between items-center">
         <p className="text-sm text-text-light">
           Showing {filteredBookings.length} of {bookings.length} bookings
@@ -324,7 +303,6 @@ export default function AdminDashboard() {
         </button>
       </div>
 
-      {/* Bookings Table */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-6 border-b border-gray-100 bg-gray-50">
           <h2 className="text-xl font-bold text-primary-navy">Consultations</h2>
@@ -333,26 +311,20 @@ export default function AdminDashboard() {
         
         {filteredBookings.length === 0 ? (
           <div className="p-12 text-center">
-            <div className="text-6xl mb-4">📋</div>
             <p className="text-text-light font-medium">No bookings found</p>
-            <p className="text-sm text-text-light mt-2">
-              {searchTerm || statusFilter !== 'all' 
-                ? 'Try adjusting your filters' 
-                : 'When customers book consultations, they will appear here'}
-            </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50 border-b">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-text-light uppercase tracking-wider">Client</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-text-light uppercase tracking-wider">Contact</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-text-light uppercase tracking-wider">Service</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-text-light uppercase tracking-wider">Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-text-light uppercase tracking-wider">Message</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-text-light uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-text-light uppercase tracking-wider">Actions</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-text-light uppercase">Client</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-text-light uppercase">Contact</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-text-light uppercase">Service</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-text-light uppercase">Date</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-text-light uppercase">Message</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-text-light uppercase">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-text-light uppercase">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -360,48 +332,37 @@ export default function AdminDashboard() {
                   <tr key={booking._id} className="hover:bg-gray-50 transition">
                     <td className="px-6 py-4">
                       <div className="font-medium text-text-dark">{booking.fullName}</div>
-                      <div className="text-xs text-text-light">ID: {booking._id.slice(-6)}</div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm">{booking.email}</div>
                       <div className="text-xs text-text-light">{booking.phone}</div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm max-w-xs truncate">{booking.service}</div>
+                      <div className="text-sm">{booking.service}</div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm">{new Date(booking.preferredDate).toLocaleDateString()}</div>
-                      <div className="text-xs text-text-light">{new Date(booking.createdAt).toLocaleDateString()}</div>
                     </td>
                     <td className="px-6 py-4">
                       {booking.message ? (
                         <div className="flex items-center gap-2">
-                          <MessageSquare size={14} className="text-primary-blue" />
-                          <span className="text-sm text-text-dark">
-                            {booking.message.length > 40 ? booking.message.substring(0, 40) + '...' : booking.message}
-                          </span>
+                          <span className="text-sm">{booking.message.substring(0, 40)}...</span>
                           <button
                             onClick={() => viewFullMessage(booking.message!, booking.fullName)}
-                            className="text-primary-blue hover:text-primary-teal text-xs font-medium flex items-center gap-1"
+                            className="text-primary-blue text-xs"
                           >
-                            <Eye size={12} />
                             View Full
                           </button>
                         </div>
                       ) : (
-                        <span className="text-text-light italic text-sm">No message</span>
+                        <span className="text-text-light italic">No message</span>
                       )}
                     </td>
                     <td className="px-6 py-4">
                       <select
                         value={booking.status}
                         onChange={(e) => updateStatus(booking._id, e.target.value)}
-                        className={`px-3 py-1 rounded-full text-xs font-semibold cursor-pointer ${
-                          booking.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                          booking.status === 'confirmed' ? 'bg-green-100 text-green-800' :
-                          booking.status === 'completed' ? 'bg-blue-100 text-blue-800' :
-                          'bg-red-100 text-red-800'
-                        }`}
+                        className="px-2 py-1 rounded text-xs"
                       >
                         <option value="pending">Pending</option>
                         <option value="confirmed">Confirmed</option>
@@ -412,7 +373,7 @@ export default function AdminDashboard() {
                     <td className="px-6 py-4">
                       <button
                         onClick={() => deleteBooking(booking._id)}
-                        className="text-red-600 hover:text-red-800 text-sm font-medium hover:underline"
+                        className="text-red-600 text-sm"
                       >
                         Delete
                       </button>
@@ -425,37 +386,20 @@ export default function AdminDashboard() {
         )}
       </div>
 
-      {/* View Full Message Modal */}
       {selectedMessage && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
-            <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-              <div>
-                <h2 className="text-xl font-bold text-primary-navy">Full Message</h2>
-                <p className="text-text-light text-sm">From: {selectedBookingName}</p>
-              </div>
-              <button
-                onClick={() => setSelectedMessage(null)}
-                className="text-gray-400 hover:text-gray-600 transition"
-              >
-                <X size={24} />
-              </button>
+          <div className="bg-white rounded-xl max-w-lg w-full p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold">Message from {selectedBookingName}</h3>
+              <button onClick={() => setSelectedMessage(null)}>✕</button>
             </div>
-            <div className="p-6 overflow-y-auto max-h-[60vh]">
-              <div className="bg-gray-50 rounded-lg p-4">
-                <p className="text-text-dark whitespace-pre-wrap leading-relaxed">
-                  {selectedMessage}
-                </p>
-              </div>
-            </div>
-            <div className="p-6 border-t border-gray-100 flex justify-end">
-              <button
-                onClick={() => setSelectedMessage(null)}
-                className="px-4 py-2 bg-primary-blue text-white rounded-lg hover:bg-primary-blue/90 transition"
-              >
-                Close
-              </button>
-            </div>
+            <p className="text-text-dark whitespace-pre-wrap">{selectedMessage}</p>
+            <button
+              onClick={() => setSelectedMessage(null)}
+              className="mt-4 px-4 py-2 bg-primary-blue text-white rounded"
+            >
+              Close
+            </button>
           </div>
         </div>
       )}
