@@ -4,9 +4,22 @@ import { useEffect, useState, useCallback } from 'react';
 import { Calendar, Clock, CheckCircle, Star, Filter, Search, Download, RefreshCw, X, MessageSquare, Eye } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+// Define the Booking type
+interface Booking {
+  _id: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  service: string;
+  preferredDate: string;
+  createdAt: string;
+  status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+  message?: string;
+}
+
 export default function AdminDashboard() {
-  const [bookings, setBookings] = useState([]);
-  const [filteredBookings, setFilteredBookings] = useState([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [filteredBookings, setFilteredBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -81,8 +94,8 @@ export default function AdminDashboard() {
       });
       
       if (res.ok) {
-        setBookings(prev => prev.map((b: any) => 
-          b._id === id ? { ...b, status } : b
+        setBookings(prev => prev.map((b: Booking) => 
+          b._id === id ? { ...b, status: status as Booking['status'] } : b
         ));
         toast.success(`Booking marked as ${status}`);
       }
@@ -99,8 +112,9 @@ export default function AdminDashboard() {
         });
         
         if (res.ok) {
-          setBookings(prev => prev.filter((b: any) => b._id !== id));
+          setBookings(prev => prev.filter((b: Booking) => b._id !== id));
           toast.success('Booking deleted successfully');
+          if (selectedMessage) setSelectedMessage(null);
         }
       } catch (error) {
         toast.error('Failed to delete booking');
@@ -111,7 +125,7 @@ export default function AdminDashboard() {
   const exportToCSV = () => {
     const headers = ['Full Name', 'Email', 'Phone', 'Service', 'Preferred Date', 'Status', 'Message', 'Created At'];
     
-    const rows = filteredBookings.map((booking: any) => [
+    const rows = filteredBookings.map((booking: Booking) => [
       booking.fullName,
       booking.email,
       booking.phone,
@@ -145,10 +159,10 @@ export default function AdminDashboard() {
 
   const stats = {
     total: bookings.length,
-    pending: bookings.filter((b: any) => b.status === 'pending').length,
-    confirmed: bookings.filter((b: any) => b.status === 'confirmed').length,
-    completed: bookings.filter((b: any) => b.status === 'completed').length,
-    cancelled: bookings.filter((b: any) => b.status === 'cancelled').length,
+    pending: bookings.filter((b: Booking) => b.status === 'pending').length,
+    confirmed: bookings.filter((b: Booking) => b.status === 'confirmed').length,
+    completed: bookings.filter((b: Booking) => b.status === 'completed').length,
+    cancelled: bookings.filter((b: Booking) => b.status === 'cancelled').length,
   };
 
   if (loading) {
@@ -342,7 +356,7 @@ export default function AdminDashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {filteredBookings.map((booking: any) => (
+                {filteredBookings.map((booking: Booking) => (
                   <tr key={booking._id} className="hover:bg-gray-50 transition">
                     <td className="px-6 py-4">
                       <div className="font-medium text-text-dark">{booking.fullName}</div>
@@ -367,7 +381,7 @@ export default function AdminDashboard() {
                             {booking.message.length > 40 ? booking.message.substring(0, 40) + '...' : booking.message}
                           </span>
                           <button
-                            onClick={() => viewFullMessage(booking.message, booking.fullName)}
+                            onClick={() => viewFullMessage(booking.message!, booking.fullName)}
                             className="text-primary-blue hover:text-primary-teal text-xs font-medium flex items-center gap-1"
                           >
                             <Eye size={12} />
