@@ -1,9 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Clock, User, Mail, Phone, MessageSquare } from 'lucide-react';
 import toast from 'react-hot-toast';
+
+interface Service {
+  _id: string;
+  title: string;
+  isActive: boolean;
+}
 
 export default function BookPage() {
   const [formData, setFormData] = useState({
@@ -15,14 +21,38 @@ export default function BookPage() {
     message: ''
   });
   const [loading, setLoading] = useState(false);
+  const [services, setServices] = useState<Service[]>([]);
+  const [loadingServices, setLoadingServices] = useState(true);
 
-  const services = [
-    'Professional Website Design',
-    'Company Registration Assistance',
-    'Branding & Logo Design',
-    'Social Media Management',
-    'Digital Marketing'
-  ];
+  // Fetch services from API
+  useEffect(() => {
+    fetchServices();
+  }, []);
+
+  const fetchServices = async () => {
+    try {
+      const res = await fetch('/api/services');
+      const data = await res.json();
+      if (data.success) {
+        // Only show active services
+        const activeServices = data.data.filter((s: Service) => s.isActive === true);
+        setServices(activeServices);
+      }
+    } catch (error) {
+      console.error('Error fetching services:', error);
+    } finally {
+      setLoadingServices(false);
+    }
+  };
+
+  // Get today's date in YYYY-MM-DD format for min date attribute
+  const getTodayDate = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -147,7 +177,7 @@ export default function BookPage() {
                   </div>
                 </div>
 
-                {/* Service */}
+                {/* Service - Dynamically from database */}
                 <div>
                   <label className="block text-sm font-semibold text-text-dark mb-2">
                     Service Interested In *
@@ -160,17 +190,20 @@ export default function BookPage() {
                       value={formData.service}
                       onChange={handleChange}
                       className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-blue focus:border-transparent appearance-none"
+                      disabled={loadingServices}
                     >
-                      <option value="">Select a service</option>
+                      <option value="">{loadingServices ? 'Loading services...' : 'Select a service'}</option>
                       {services.map((service) => (
-                        <option key={service} value={service}>{service}</option>
+                        <option key={service._id} value={service.title}>
+                          {service.title}
+                        </option>
                       ))}
                     </select>
                   </div>
                 </div>
               </div>
 
-              {/* Preferred Date */}
+              {/* Preferred Date - with min date (can't select past dates) */}
               <div>
                 <label className="block text-sm font-semibold text-text-dark mb-2">
                   Preferred Date *
@@ -181,11 +214,13 @@ export default function BookPage() {
                     type="date"
                     name="preferredDate"
                     required
+                    min={getTodayDate()}
                     value={formData.preferredDate}
                     onChange={handleChange}
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-blue focus:border-transparent"
                   />
                 </div>
+                <p className="text-xs text-text-light mt-1">Please select a future date</p>
               </div>
 
               {/* Message */}
