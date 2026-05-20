@@ -53,7 +53,7 @@ export async function sendAdminNotification(booking: any) {
       </table>
       
         <p style="margin-top: 20px;">
-        <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/admin" 
+        <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'https://aac-innovation-rjq55lm8u-emaicees-projects.vercel.app/'}/admin" 
            style="background: #0066FF; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
           View in Admin Dashboard
         </a>
