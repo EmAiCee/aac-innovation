@@ -57,30 +57,36 @@ export default function ServicesSection() {
           </p>
         </div>
         
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {/* Responsive Grid: 1 on mobile, 2 on tablet, 3 on medium, 4 on large */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {services.map((service: any) => (
             <div key={service._id} className="group bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
               <div className="h-1 bg-gradient-to-r from-primary-blue to-primary-teal"></div>
-              <div className="p-6">
-                <h3 className="text-xl font-bold text-primary-navy mb-3 group-hover:text-primary-blue transition-colors">
+              <div className="p-5 sm:p-6">
+                <h3 className="text-base sm:text-lg lg:text-xl font-bold text-primary-navy mb-2 group-hover:text-primary-blue transition-colors line-clamp-1">
                   {service.title}
                 </h3>
-                <p className="text-text-light mb-4 leading-relaxed">
+                <p className="text-text-light mb-3 leading-relaxed text-sm sm:text-base line-clamp-3">
                   {service.description}
                 </p>
-                <div className="flex flex-wrap gap-2 mb-6">
-                  {service.features?.map((feature: string, idx: number) => (
-                    <span key={idx} className="text-xs bg-gray-100 text-text-dark px-3 py-1.5 rounded-full">
+                <div className="flex flex-wrap gap-1.5 mb-4">
+                  {service.features?.slice(0, 3).map((feature: string, idx: number) => (
+                    <span key={idx} className="text-[10px] sm:text-xs bg-gray-100 text-text-dark px-2 sm:px-3 py-1 rounded-full">
                       ✓ {feature}
                     </span>
                   ))}
+                  {service.features?.length > 3 && (
+                    <span className="text-[10px] sm:text-xs bg-gray-100 text-text-dark px-2 sm:px-3 py-1 rounded-full">
+                      +{service.features.length - 3}
+                    </span>
+                  )}
                 </div>
                 <Link 
                   href="/book" 
-                  className="inline-flex items-center gap-2 text-primary-blue font-semibold group-hover:gap-3 transition-all"
+                  className="inline-flex items-center gap-1.5 sm:gap-2 text-primary-blue font-semibold text-sm sm:text-base group-hover:gap-2 sm:group-hover:gap-3 transition-all"
                 >
                   Get Started
-                  <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight size={14} className="sm:w-4 sm:h-4 group-hover:translate-x-1 transition-transform" />
                 </Link>
               </div>
             </div>
